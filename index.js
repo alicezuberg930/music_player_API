@@ -8,8 +8,8 @@ const port = 3000
 const hostname = "127.0.0.1"
 
 app.get('/', async (req, res) => {
-    console.log("cefececqe")
-    res.json({ aaa: "efijwerfrr" })
+    console.log("deployed")
+    res.json({ aaa: "deployed" })
 });
 
 app.get('/api/v2/search/multi', async (req, res) => {
@@ -110,6 +110,6 @@ app.use((req, res) => {
     res.status(404).send('Not Found')
 })
 
-app.listen(port, hostname, () => {
-    console.log(`Server running at http://${hostname}:${port}/`)
+app.listen(port, () => {
+    console.log(`Server running at ${port}/`)
 })
