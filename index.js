@@ -1,3 +1,4 @@
+const { default: axios } = require('axios')
 const express = require('express')
 // const ZingMp3 = require("zingmp3-api")
 // const { ZingMp3 } = require("zingmp3-api-full-v3")
@@ -77,6 +78,11 @@ app.get('/api/v2/song/get/streaming', async (req, res) => {
     try {
         const results = await ZingMp3.getSong(req.query.id);
         console.log(results);
+        if (results.url != null) {
+            const data = axios.get(results.url);
+            res.json(data);
+            return;
+        }
         res.json(results);
     } catch (error) {
         console.log(error);
