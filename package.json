@@ -1,10 +1,9 @@
 {
   "main": "index.js",
   "dependencies": {
-    "axios": "^1.7.2",
-    "express": "^4.19.2",
-    "zingmp3-api": "^1.0.10",
-    "zingmp3-api-full": "^1.0.14",
-    "zingmp3-api-full-v3": "^3.0.0"
+    "axios": "^1.7.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2"
   }
 }
