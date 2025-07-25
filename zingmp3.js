@@ -1,7 +1,6 @@
 const axios = require("axios")
 const crypto = require("crypto")
 const { HttpProxyAgent } = require("http-proxy-agent")
-const { HttpsProxyAgent } = require("https-proxy-agent")
 
 class ZingMp3Api {
     constructor(VERSION, URL, SECRET_KEY, API_KEY, CTIME) {
@@ -93,13 +92,9 @@ class ZingMp3Api {
                     version: this.VERSION,
                     apiKey: this.API_KEY,
                 },
-                httpAgent: proxyAgent,
-                // httpsAgent: proxyAgent,
-                // proxy: {
-                //     host: 'https://27.71.141.171:16000',
-                //     port: '16000',
-                // }
+                httpAgents: proxyAgent,
             })
+            console.log(response.request)
             return response
         } catch (error) {
             console.log(error)
