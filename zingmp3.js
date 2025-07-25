@@ -1,6 +1,7 @@
 const axios = require("axios")
 const crypto = require("crypto")
 const { HttpProxyAgent } = require("http-proxy-agent")
+const { HttpsProxyAgent } = require("https-proxy-agent")
 
 class ZingMp3Api {
     constructor(VERSION, URL, SECRET_KEY, API_KEY, CTIME) {
@@ -80,7 +81,7 @@ class ZingMp3Api {
             const client = axios.create({ baseURL: `${this.URL}` })
             client.interceptors.response.use((res) => res.data)
             let cookie = await this.getCookie()
-            const proxyAgent = new HttpProxyAgent("http://113.162.238.139:20499");
+            const proxyAgent = new HttpsProxyAgent("https://113.160.132.195:8080");
 
             let response = await client.get(path, {
                 headers: {
