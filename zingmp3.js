@@ -93,7 +93,7 @@ class ZingMp3Api {
                     version: this.VERSION,
                     apiKey: this.API_KEY,
                 },
-                httpAgents: proxyAgent,
+                httpsAgent: proxyAgent,
             })
             console.log(response.request)
             return response
