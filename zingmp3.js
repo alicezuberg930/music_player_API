@@ -92,7 +92,12 @@ class ZingMp3Api {
                     version: this.VERSION,
                     apiKey: this.API_KEY,
                 },
-                httpAgent: proxyAgent
+                httpAgent: proxyAgent,
+                proxy: {
+                    host: 'http://123.30.154.171:7777',
+                    port: '7777',
+                    protocol: 'http'
+                }
             })
             return response
         } catch (error) {
