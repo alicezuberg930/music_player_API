@@ -81,7 +81,7 @@ class ZingMp3Api {
             const client = axios.create({ baseURL: `${this.URL}` })
             client.interceptors.response.use((res) => res.data)
             let cookie = await this.getCookie()
-            const proxyAgent = new HttpsProxyAgent("https://113.160.132.195:8080");
+            const proxyAgent = new HttpProxyAgent("http://14.241.80.37:8080");
 
             let response = await client.get(path, {
                 headers: {
@@ -93,7 +93,7 @@ class ZingMp3Api {
                     version: this.VERSION,
                     apiKey: this.API_KEY,
                 },
-                // httpsAgent: proxyAgent,
+                httpAgent: proxyAgent,
             })
             console.log(response.request)
             return response

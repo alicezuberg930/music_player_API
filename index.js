@@ -10,6 +10,7 @@ app.use(cors('/api/v2', { origin: ["https://music-player-website-olive.vercel.ap
 
 app.get('/', async (req, res) => {
     res.send("SERVER DEPLOYED")
+    await ZingMp3.getHome();
 });
 
 app.get('/api/v2/search/multi', async (req, res) => {
