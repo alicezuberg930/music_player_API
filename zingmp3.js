@@ -42,6 +42,14 @@ class ZingMp3Api {
         )
     }
 
+    hashSearchType(path, type, page, count) {
+        return this.getHmac512(
+            path +
+            this.getHash256(`count=${count}ctime=${this.CTIME}page=${page}type=${type}version=${this.VERSION}`),
+            this.SECRET_KEY
+        )
+    }
+
     hashCategoryMV(path, id, type) {
         return this.getHmac512(
             path + this.getHash256(`ctime=${this.CTIME}id=${id}type=${type}version=${this.VERSION}`),
@@ -81,7 +89,7 @@ class ZingMp3Api {
             const client = axios.create({ baseURL: `${this.URL}` })
             client.interceptors.response.use((res) => res.data)
             let cookie = await this.getCookie()
-            const proxyAgent = new HttpProxyAgent("http://14.241.80.37:8080");
+            // const proxyAgent = new HttpProxyAgent("http://14.241.80.37:8080");
 
             let response = await client.get(path, {
                 headers: {
@@ -93,7 +101,7 @@ class ZingMp3Api {
                     version: this.VERSION,
                     apiKey: this.API_KEY,
                 },
-                httpAgent: proxyAgent,
+                // httpAgent: proxyAgent,
             })
             console.log(response.request)
             return response
@@ -241,11 +249,26 @@ class ZingMp3Api {
         }
     }
 
-    search = async (name) => {
+    searchMulti = async (name) => {
         try {
             const search = await this.requestZingMp3("/api/v2/search/multi", {
                 q: name,
                 sig: this.hashParamNoId("/api/v2/search/multi")
+            })
+            return search
+        } catch (error) {
+            return error
+        }
+    }
+
+    searchType = async (name, type, page = 1, count = 30) => {
+        try {
+            const search = await this.requestZingMp3("/api/v2/search", {
+                q: name,
+                type,
+                page,
+                count,
+                sig: this.hashSearchType("/api/v2/search", type, page, count)
             })
             return search
         } catch (error) {
