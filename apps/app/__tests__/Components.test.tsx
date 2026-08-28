@@ -14,6 +14,7 @@ import * as DropdownMenu from '@/components/ui/dropdown-menu';
 import * as HoverCard from '@/components/ui/hover-card';
 import * as Icon from '@/components/ui/icon';
 import * as Input from '@/components/ui/input';
+import * as InputOTP from '@/components/ui/input-otp';
 import * as Label from '@/components/ui/label';
 import * as Menubar from '@/components/ui/menubar';
 import * as NativeOnlyAnimatedView from '@/components/ui/native-only-animated-view';
@@ -30,6 +31,7 @@ import * as Textarea from '@/components/ui/textarea';
 import * as ToggleGroup from '@/components/ui/toggle-group';
 import * as Toggle from '@/components/ui/toggle';
 import * as Tooltip from '@/components/ui/tooltip';
+import * as Toast from '@/components/ui/toast';
 
 const componentModules = [
   Accordion,
@@ -48,6 +50,7 @@ const componentModules = [
   HoverCard,
   Icon,
   Input,
+  InputOTP,
   Label,
   Menubar,
   NativeOnlyAnimatedView,
@@ -64,10 +67,11 @@ const componentModules = [
   ToggleGroup,
   Toggle,
   Tooltip,
+  Toast,
 ];
 
 test('loads the complete component registry', () => {
-  expect(componentModules).toHaveLength(32);
+  expect(componentModules).toHaveLength(34);
   expect(
     componentModules.every(
       componentModule => Object.keys(componentModule).length > 0,

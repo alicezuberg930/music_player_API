@@ -1,6 +1,7 @@
 import './global.css';
-
 import { PortalHost } from '@/components/primitives/portal';
+import { Toaster } from '@/components/ui/toast';
+import { ReduxProvider } from '@/providers/redux-provider';
 import { MainScreen } from '@/screens/main-screen';
 import { StatusBar, useColorScheme, View } from 'react-native';
 import {
@@ -12,17 +13,16 @@ function App() {
   const isDarkMode = useColorScheme() === 'dark';
 
   return (
-    <SafeAreaProvider>
-      <View
-        className={
-          isDarkMode ? 'dark flex-1 bg-background' : 'flex-1 bg-background'
-        }
-      >
-        <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
-        <AppContent />
-        <PortalHost />
-      </View>
-    </SafeAreaProvider>
+    <ReduxProvider>
+      <SafeAreaProvider>
+        <View className={isDarkMode ? 'dark flex-1 bg-background' : 'flex-1 bg-background'}>
+          <StatusBar barStyle={isDarkMode ? 'light-content' : 'dark-content'} />
+          <AppContent />
+          <Toaster />
+          <PortalHost />
+        </View>
+      </SafeAreaProvider>
+    </ReduxProvider>
   );
 }
 

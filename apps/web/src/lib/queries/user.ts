@@ -4,7 +4,7 @@ import type {
     HomeData,
     Playlist,
     PlaylistType,
-    Response,
+    ApiResponse,
     Song,
     SongType,
     User
@@ -40,7 +40,7 @@ export const userQueries = () => ({
                 queryKey: keys.profile(),
                 queryFn: async () => {
                     const { data } = await httpClient.get<
-                        Response<User>
+                        ApiResponse<User>
                     >('/users/me/profile')
                     return data
                 },
@@ -52,7 +52,7 @@ export const userQueries = () => ({
             queryOptions({
                 queryKey: keys.song(type),
                 queryFn: async () => {
-                    const { data } = await httpClient.get<Response<Song[]>>(
+                    const { data } = await httpClient.get<ApiResponse<Song[]>>(
                         `/users/song/list`, { type }
                     )
                     return data
@@ -65,7 +65,7 @@ export const userQueries = () => ({
             queryOptions({
                 queryKey: keys.playlist(type),
                 queryFn: async () => {
-                    const { data } = await httpClient.get<Response<Playlist[]>>(
+                    const { data } = await httpClient.get<ApiResponse<Playlist[]>>(
                         `/users/playlist/list`, { type }
                     )
                     return data
@@ -78,7 +78,7 @@ export const userQueries = () => ({
             queryOptions({
                 queryKey: keys.artist(),
                 queryFn: async () => {
-                    const { data } = await httpClient.get<Response<Artist[]>>(
+                    const { data } = await httpClient.get<ApiResponse<Artist[]>>(
                         `/users/artist/list`
                     )
                     return data
@@ -91,7 +91,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.verify(),
                 mutationFn: async ({ userId, token }: { userId: string, token: string }) => {
-                    return await httpClient.put<Response>(
+                    return await httpClient.put<ApiResponse>(
                         `/users/verify-email/${userId}`,
                         { token }
                     )
@@ -107,7 +107,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.refreshToken(),
                 mutationFn: async () => {
-                    return await httpClient.post<Response<{ accessToken: string }>>(
+                    return await httpClient.post<ApiResponse<{ accessToken: string }>>(
                         `/auth/refresh`,
                     )
                 },
@@ -119,7 +119,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.signIn(),
                 mutationFn: async (input: AuthValidators.SignInInput) => {
-                    return await httpClient.post<Response<{
+                    return await httpClient.post<ApiResponse<{
                         user: User,
                         accessToken: string,
                         refreshToken: string
@@ -133,7 +133,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.signUp(),
                 mutationFn: async (input: AuthValidators.SignUpInput) => {
-                    return await httpClient.post<Response>(`/auth/sign-up`, input)
+                    return await httpClient.post<ApiResponse>(`/auth/sign-up`, input)
                 },
             }),
     },
@@ -143,7 +143,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.signOut(),
                 mutationFn: async () => {
-                    return await httpClient.post<Response>(`/auth/sign-out`)
+                    return await httpClient.post<ApiResponse>(`/auth/sign-out`)
                 },
             }),
     },
@@ -153,7 +153,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.favoriteSong(),
                 mutationFn: async (id: string) => {
-                    return await httpClient.put<Response>(`/users/favorite/song/${id}`)
+                    return await httpClient.put<ApiResponse>(`/users/favorite/song/${id}`)
                 },
                 onMutate: async (id: string) => {
                     // Cancel ongoing queries to prevent overwriting optimistic update
@@ -168,7 +168,7 @@ export const userQueries = () => ({
 
                     // Optimistic update for home data
                     if (previousHome) {
-                        queryClient().setQueryData<Response<HomeData>>(homeKeys.all(), (old) => {
+                        queryClient().setQueryData<ApiResponse<HomeData>>(homeKeys.all(), (old) => {
                             if (!old?.data) return old
                             return {
                                 ...old,
@@ -184,7 +184,7 @@ export const userQueries = () => ({
 
                     // Optimistic update for favorite songs list
                     if (previousFavorite) {
-                        queryClient().setQueryData<Response<Song[]>>(keys.song('favorite'), (old) => {
+                        queryClient().setQueryData<ApiResponse<Song[]>>(keys.song('favorite'), (old) => {
                             if (!old?.data) return old
                             return {
                                 ...old,
@@ -196,7 +196,7 @@ export const userQueries = () => ({
                     }
 
                     if (previousUploaded) {
-                        queryClient().setQueryData<Response<Song[]>>(keys.song('uploaded'), (old) => {
+                        queryClient().setQueryData<ApiResponse<Song[]>>(keys.song('uploaded'), (old) => {
                             if (!old?.data) return old
                             return {
                                 ...old,
@@ -234,7 +234,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.favoritePlaylist(),
                 mutationFn: async (id: string) => {
-                    return await httpClient.put<Response>(`/users/favorite/playlist/${id}`)
+                    return await httpClient.put<ApiResponse>(`/users/favorite/playlist/${id}`)
                 },
                 onMutate: async (id: string) => {
                     // Cancel ongoing queries to prevent overwriting optimistic update
@@ -249,7 +249,7 @@ export const userQueries = () => ({
 
                     // Optimistic update for home data
                     if (previousHome) {
-                        queryClient().setQueryData<Response<HomeData>>(homeKeys.all(), (old) => {
+                        queryClient().setQueryData<ApiResponse<HomeData>>(homeKeys.all(), (old) => {
                             if (!old?.data) return old
                             return {
                                 ...old,
@@ -265,7 +265,7 @@ export const userQueries = () => ({
 
                     // Optimistic update for favorite songs list
                     if (previousFavorite) {
-                        queryClient().setQueryData<Response<Playlist[]>>(keys.playlist('favorite'), (old) => {
+                        queryClient().setQueryData<ApiResponse<Playlist[]>>(keys.playlist('favorite'), (old) => {
                             if (!old?.data) return old
                             return {
                                 ...old,
@@ -277,7 +277,7 @@ export const userQueries = () => ({
                     }
 
                     if (previousCreated) {
-                        queryClient().setQueryData<Response<Playlist[]>>(keys.playlist('favorite'), (old) => {
+                        queryClient().setQueryData<ApiResponse<Playlist[]>>(keys.playlist('favorite'), (old) => {
                             if (!old?.data) return old
                             return {
                                 ...old,
@@ -315,7 +315,7 @@ export const userQueries = () => ({
             mutationOptions({
                 mutationKey: keys.update(),
                 mutationFn: async (id: string) => {
-                    return await httpClient.put<Response>(
+                    return await httpClient.put<ApiResponse>(
                         `/users/follow/artist/${id}`
                     )
                 },

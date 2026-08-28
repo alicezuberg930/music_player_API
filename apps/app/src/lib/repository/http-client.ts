@@ -1,318 +1,148 @@
-import { HttpError } from '@/lib/repository/http-error';
-import { InterceptorManager } from '@/lib/repository/interceptor';
+import { type ApiResponse } from '@/@types'
+import { HttpError } from './http-error'
+import { InterceptorManager } from './interceptor'
 
-export type HttpResponse<T> = {
-  data: T;
-  headers: Headers;
-  status: number;
-};
+const BASE_URL = process.env.VITE_API_URL
 
-export type QueryPrimitive = boolean | number | string;
-export type QueryValue =
-  QueryPrimitive | readonly QueryPrimitive[] | null | undefined;
-export type QueryParams = Readonly<Record<string, QueryValue>>;
-
-export type AccessTokenProvider = () =>
-  Promise<string | null | undefined> | string | null | undefined;
-
-export type HttpRequestInit = RequestInit & {
-  auth?: boolean;
-};
-
-export type HttpRequestOptions = Omit<HttpRequestInit, 'body' | 'method'>;
-
-export type HttpClientOptions = {
-  baseUrl: string;
-  defaultHeaders?: RequestInit['headers'];
-  fetchImpl?: typeof fetch;
-  getAccessToken?: AccessTokenProvider;
-};
-
-type MutationMethod = 'PATCH' | 'POST' | 'PUT';
+export type ResponseWithHeaders<T> = {
+  data: T
+  headers: Headers
+}
 
 export class HttpClient {
-  readonly baseUrl: string;
-  readonly interceptors = {
+  interceptors = {
     request: new InterceptorManager<RequestInit>(),
-    response: new InterceptorManager<HttpResponse<unknown>>(),
-  };
+    response: new InterceptorManager<
+      Error | HttpError | ResponseWithHeaders<unknown>
+    >(),
+  }
 
-  private readonly defaultHeaders?: RequestInit['headers'];
-  private readonly fetcher: typeof fetch;
-  private readonly getAccessToken?: AccessTokenProvider;
-
-  constructor({
-    baseUrl,
-    defaultHeaders,
-    fetchImpl = fetch,
-    getAccessToken,
-  }: HttpClientOptions) {
-    this.baseUrl = normalizeBaseUrl(baseUrl);
-    this.defaultHeaders = defaultHeaders;
-    this.fetcher = fetchImpl;
-    this.getAccessToken = getAccessToken;
+  private async fetchJson<T = unknown>(
+    url: string,
+    options: RequestInit = {}
+  ): Promise<T> {
+    let config: RequestInit = {
+      ...options,
+      headers: {
+        ...(options.body instanceof FormData
+          ? {}
+          : { 'Content-Type': 'application/json' }),
+      },
+    }
+    for (const { onFulfilled } of this.interceptors.request.getHandlers()) {
+      if (onFulfilled) config = await onFulfilled(config)
+    }
+    try {
+      const response = await fetch(url, config)
+      if (!response.ok) {
+        const text = await response.text()
+        let data: ApiResponse<null> | string
+        try {
+          data = text ? JSON.parse(text) : null
+        } catch {
+          data = text
+        }
+        const error = new HttpError(
+          response.status,
+          data instanceof Object ? data.message : data,
+          data
+        )
+        // if error is due to authentication, handle it here (e.g., redirect to login)
+        for (const { onRejected } of this.interceptors.response.getHandlers()) {
+          if (onRejected) onRejected(error)
+        }
+        throw error
+      }
+      const data = await response.json()
+      // Call response interceptors with headers available
+      for (const { onFulfilled } of this.interceptors.response.getHandlers()) {
+        if (onFulfilled) {
+          await onFulfilled({ data: data as T, headers: response.headers })
+        }
+      }
+      return data as T
+    } catch (error: unknown) {
+      for (const { onRejected } of this.interceptors.response.getHandlers()) {
+        if (onRejected) onRejected(error)
+      }
+      if (!(error instanceof HttpError))
+        throw new HttpError(500, 'Internal Server Error')
+      throw error
+    }
   }
 
   get<T = unknown>(
     endpoint: string,
-    params: QueryParams = {},
-    options: HttpRequestOptions = {},
+    params: Record<string, unknown> = {},
+    options?: RequestInit
   ) {
-    return this.request<T>(appendQuery(endpoint, params), {
-      ...options,
-      method: 'GET',
-    });
-  }
-
-  post<T = unknown, TBody = unknown>(
-    endpoint: string,
-    body?: TBody,
-    options: HttpRequestOptions = {},
-  ) {
-    return this.mutate<T, TBody>('POST', endpoint, body, options);
-  }
-
-  put<T = unknown, TBody = unknown>(
-    endpoint: string,
-    body?: TBody,
-    options: HttpRequestOptions = {},
-  ) {
-    return this.mutate<T, TBody>('PUT', endpoint, body, options);
-  }
-
-  patch<T = unknown, TBody = unknown>(
-    endpoint: string,
-    body?: TBody,
-    options: HttpRequestOptions = {},
-  ) {
-    return this.mutate<T, TBody>('PATCH', endpoint, body, options);
-  }
-
-  delete<T = unknown>(endpoint: string, options: HttpRequestOptions = {}) {
-    return this.request<T>(endpoint, { ...options, method: 'DELETE' });
-  }
-
-  async request<T = unknown>(endpoint: string, init: HttpRequestInit = {}) {
-    const url = this.resolveEndpoint(endpoint);
-    let requestInit: RequestInit;
-
-    try {
-      requestInit = await this.prepareRequest(init);
-    } catch (error) {
-      await this.interceptors.request.runRejected(error);
-      throw error;
-    }
-
-    try {
-      const response = await this.fetcher(url, requestInit);
-      const data = await parseResponseBody(response);
-
-      if (!response.ok) {
-        throw new HttpError(
-          response.status,
-          getErrorMessage(response, data),
-          data,
-          { headers: response.headers, url },
-        );
+    const queryParams = new URLSearchParams()
+    for (const key in params) {
+      const value = params[key]
+      if (value !== undefined && value !== null) {
+        if (Array.isArray(value)) {
+          queryParams.append(key, JSON.stringify(value))
+        } else {
+          queryParams.append(key, String(value))
+        }
       }
-
-      const interceptedResponse = await this.interceptors.response.runFulfilled(
-        {
-          data,
-          headers: response.headers,
-          status: response.status,
-        },
-      );
-
-      return interceptedResponse.data as T;
-    } catch (error) {
-      if (isAbortError(error)) {
-        throw error;
+    }
+    return this.fetchJson<T>(
+      `${BASE_URL}${endpoint}?${queryParams.toString()}`,
+      {
+        method: 'GET',
+        credentials: 'include',
+        ...options,
       }
-
-      const httpError =
-        error instanceof HttpError
-          ? error
-          : new HttpError(0, getNetworkErrorMessage(error), undefined, {
-              cause: error,
-              url,
-            });
-
-      await this.interceptors.response.runRejected(httpError);
-      throw httpError;
-    }
+    )
   }
 
-  private mutate<T, TBody>(
-    method: MutationMethod,
-    endpoint: string,
-    body: TBody | undefined,
-    options: HttpRequestOptions,
-  ) {
-    const formData = isFormData(body);
-    const headers = new Headers(options.headers);
-
-    if (body !== undefined && !formData && !headers.has('Content-Type')) {
-      headers.set('Content-Type', 'application/json');
-    }
-
-    return this.request<T>(endpoint, {
-      ...options,
-      body:
-        body === undefined ? undefined : formData ? body : JSON.stringify(body),
-      headers,
-      method,
-    });
-  }
-
-  private async prepareRequest(init: HttpRequestInit) {
-    const { auth = true, ...requestInit } = init;
-    const headers = mergeHeaders(this.defaultHeaders, requestInit.headers);
-    if (isFormData(requestInit.body)) {
-      headers.delete('Content-Type');
-    }
-    const token =
-      auth && !headers.has('Authorization')
-        ? await this.getAccessToken?.()
-        : undefined;
-
-    if (token && !headers.has('Authorization')) {
-      headers.set('Authorization', `Bearer ${token}`);
-    }
-
-    return this.interceptors.request.runFulfilled({
+  post<T = unknown>(endpoint: string, body?: unknown, options?: RequestInit) {
+    return this.fetchJson<T>(`${BASE_URL}${endpoint}`, {
+      method: 'POST',
       credentials: 'include',
-      ...requestInit,
-      headers,
-    });
+      body: body
+        ? body instanceof FormData
+          ? body
+          : JSON.stringify(body)
+        : undefined,
+      ...options,
+    })
   }
 
-  private resolveEndpoint(endpoint: string) {
-    const trimmedEndpoint = endpoint.trim();
-    if (!trimmedEndpoint) {
-      throw new TypeError('Endpoint must not be empty');
-    }
-    if (/^[a-z][a-z\d+.-]*:\/\//i.test(trimmedEndpoint)) {
-      throw new TypeError(
-        'Endpoint must be relative to the configured base URL',
-      );
-    }
-    if (trimmedEndpoint.includes('#')) {
-      throw new TypeError('Endpoint must not contain a URL fragment');
-    }
-
-    return `${this.baseUrl}/${trimmedEndpoint.replace(/^\/+/, '')}`;
-  }
-}
-
-function normalizeBaseUrl(baseUrl: string) {
-  const normalized = baseUrl.trim().replace(/\/+$/, '');
-  if (!normalized) {
-    throw new TypeError('Base URL must not be empty');
+  put<T = unknown>(endpoint: string, body?: unknown, options?: RequestInit) {
+    return this.fetchJson<T>(`${BASE_URL}${endpoint}`, {
+      method: 'PUT',
+      credentials: 'include',
+      body: body
+        ? body instanceof FormData
+          ? body
+          : JSON.stringify(body)
+        : undefined,
+      ...options,
+    })
   }
 
-  if (
-    !/^https?:\/\/[^/?#\s]+(?:\/[^?#\s]*)?$/i.test(normalized) ||
-    normalized.includes('?') ||
-    normalized.includes('#')
-  ) {
-    throw new TypeError('Base URL must be a valid absolute URL');
+  patch<T = unknown>(endpoint: string, body?: unknown, options?: RequestInit) {
+    return this.fetchJson<T>(`${BASE_URL}${endpoint}`, {
+      method: 'PATCH',
+      credentials: 'include',
+      body: body
+        ? body instanceof FormData
+          ? body
+          : JSON.stringify(body)
+        : undefined,
+      ...options,
+    })
   }
 
-  return normalized;
-}
-
-function appendQuery(endpoint: string, params: QueryParams) {
-  const query = new URLSearchParams();
-
-  for (const [key, value] of Object.entries(params)) {
-    if (value === undefined || value === null) {
-      continue;
-    }
-    query.append(
-      key,
-      Array.isArray(value) ? JSON.stringify(value) : String(value),
-    );
-  }
-
-  const queryString = query.toString();
-  if (!queryString) {
-    return endpoint;
-  }
-
-  const separator = endpoint.includes('?')
-    ? endpoint.endsWith('?') || endpoint.endsWith('&')
-      ? ''
-      : '&'
-    : '?';
-
-  return `${endpoint}${separator}${queryString}`;
-}
-
-function mergeHeaders(...sources: Array<RequestInit['headers'] | undefined>) {
-  const headers = new Headers();
-
-  for (const source of sources) {
-    if (!source) {
-      continue;
-    }
-    new Headers(source).forEach((value, key) => headers.set(key, value));
-  }
-
-  return headers;
-}
-
-async function parseResponseBody(response: Response) {
-  if (response.status === 204 || response.status === 205) {
-    return undefined;
-  }
-
-  const text = await response.text();
-  if (!text) {
-    return undefined;
-  }
-
-  try {
-    return JSON.parse(text) as unknown;
-  } catch {
-    return text;
+  delete<T = unknown>(endpoint: string, options?: RequestInit) {
+    return this.fetchJson<T>(`${BASE_URL}${endpoint}`, {
+      method: 'DELETE',
+      credentials: 'include',
+      ...options,
+    })
   }
 }
 
-function getErrorMessage(response: Response, data: unknown) {
-  if (
-    typeof data === 'object' &&
-    data !== null &&
-    'message' in data &&
-    typeof data.message === 'string' &&
-    data.message
-  ) {
-    return data.message;
-  }
-  if (typeof data === 'string' && data) {
-    return data;
-  }
-  if (response.statusText) {
-    return response.statusText;
-  }
-  return `Request failed with status ${response.status}`;
-}
-
-function getNetworkErrorMessage(error: unknown) {
-  return error instanceof Error && error.message
-    ? error.message
-    : 'Network request failed';
-}
-
-function isAbortError(error: unknown) {
-  return (
-    typeof error === 'object' &&
-    error !== null &&
-    'name' in error &&
-    error.name === 'AbortError'
-  );
-}
-
-function isFormData(value: unknown): value is FormData {
-  return typeof FormData !== 'undefined' && value instanceof FormData;
-}
+export const httpClient = new HttpClient()

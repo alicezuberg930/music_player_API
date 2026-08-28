@@ -1,5 +1,5 @@
 import type {
-    Response,
+    ApiResponse,
 } from '@/@types'
 import { httpClient } from '../repository/http-client'
 import { mutationOptions } from '@tanstack/react-query'
@@ -18,7 +18,7 @@ export const file = () => ({
                     const formData = new FormData()
                     formData.append('subFolder', input.subFolder)
                     formData.append('file', input.file, input.file.name)
-                    return await httpClient.post<Response<string>>('/upload/single', formData)
+                    return await httpClient.post<ApiResponse<string>>('/upload/single', formData)
                 },
             }),
     },
@@ -31,7 +31,7 @@ export const file = () => ({
                     const formData = new FormData()
                     formData.append('subFolder', input.subFolder)
                     input.files.forEach((file) => formData.append('files[]', file, file.name))
-                    return await httpClient.post<Response<string[]>>(
+                    return await httpClient.post<ApiResponse<string[]>>(
                         '/upload/multiple',
                         formData
                     )

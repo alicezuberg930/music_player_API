@@ -83,6 +83,13 @@ import {
 } from '@/components/ui/hover-card';
 import { Icon } from '@/components/ui/icon';
 import { Input } from '@/components/ui/input';
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSeparator,
+  InputOTPSlot,
+  REGEXP_ONLY_DIGITS,
+} from '@/components/ui/input-otp';
 import { Label } from '@/components/ui/label';
 import {
   Menubar,
@@ -126,6 +133,7 @@ import { Switch } from '@/components/ui/switch';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Text } from '@/components/ui/text';
 import { Textarea } from '@/components/ui/textarea';
+import { toast } from '@/components/ui/toast';
 import {
   ToggleGroup,
   ToggleGroupIcon,
@@ -162,6 +170,8 @@ import * as React from 'react';
 import { ScrollView, View } from 'react-native';
 import { FadeIn } from 'react-native-reanimated';
 
+import { useNavigation } from '@/hooks/use-navigation';
+
 const APP_ICON = require('../../android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png');
 
 type ShowcaseSectionProps = React.PropsWithChildren<{
@@ -187,7 +197,10 @@ function ShowcaseSection({
 }
 
 function MainScreen() {
+  const navigation = useNavigation();
+
   const [displayName, setDisplayName] = React.useState('Yukikaze Listener');
+  const [verificationCode, setVerificationCode] = React.useState('123');
   const [notes, setNotes] = React.useState(
     'A focused mix for late-night coding.',
   );
@@ -220,7 +233,7 @@ function MainScreen() {
           <View className="flex-row items-center gap-2">
             <Badge variant="secondary">
               <Icon as={Sparkles} size={12} />
-              <Text>32 component modules</Text>
+              <Text>34 component modules</Text>
             </Badge>
           </View>
           <Text variant="h1" className="text-left text-4xl">
@@ -370,6 +383,7 @@ function MainScreen() {
               size="icon"
               variant="outline"
               accessibilityLabel="More actions"
+              onPress={() => navigation.navigate('Artist', { id: '123' })}
             >
               <Icon as={MoreHorizontal} size={18} />
             </Button>
@@ -398,6 +412,29 @@ function MainScreen() {
               placeholder="Describe this playlist"
               value={notes}
             />
+          </View>
+
+          <View className="gap-2">
+            <Label nativeID="verification-code-label">Verification code</Label>
+            <InputOTP
+              accessibilityLabelledBy="verification-code-label"
+              maxLength={6}
+              onChangeText={setVerificationCode}
+              pattern={REGEXP_ONLY_DIGITS}
+              value={verificationCode}
+            >
+              <InputOTPGroup>
+                <InputOTPSlot index={0} />
+                <InputOTPSlot index={1} />
+                <InputOTPSlot index={2} />
+              </InputOTPGroup>
+              <InputOTPSeparator />
+              <InputOTPGroup>
+                <InputOTPSlot index={3} />
+                <InputOTPSlot index={4} />
+                <InputOTPSlot index={5} />
+              </InputOTPGroup>
+            </InputOTP>
           </View>
 
           <View className="gap-4 rounded-lg border border-border p-4">
@@ -472,7 +509,7 @@ function MainScreen() {
 
         <ShowcaseSection
           title="Feedback and data"
-          description="Alerts, progress, and a complete card composition."
+          description="Alerts, toasts, progress, and a complete card composition."
         >
           <Alert icon={Info}>
             <AlertTitle>Library synced</AlertTitle>
@@ -486,6 +523,69 @@ function MainScreen() {
               Playback will continue from the offline cache.
             </AlertDescription>
           </Alert>
+
+          <View className="gap-3">
+            <Label>Toast notifications</Label>
+            <View className="flex-row flex-wrap gap-3">
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() =>
+                  toast('Track queued', {
+                    description: 'Northern Signals will play next.',
+                    action: {
+                      label: 'Undo',
+                      onPress: () => toast.info('Queue change reverted'),
+                    },
+                  })
+                }
+              >
+                <Text>Default</Text>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() => toast.success('Playlist saved')}
+              >
+                <Text>Success</Text>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() => toast.error('Download failed')}
+              >
+                <Text>Error</Text>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() => toast.info('New release available')}
+              >
+                <Text>Info</Text>
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onPress={() => toast.warning('Storage is almost full')}
+              >
+                <Text>Warning</Text>
+              </Button>
+              <Button
+                size="sm"
+                onPress={() => {
+                  toast
+                    .promise(Promise.resolve(), {
+                      loading: 'Syncing library…',
+                      success: 'Library synced',
+                      error: 'Library sync failed',
+                    })
+                    .catch(() => undefined);
+                }}
+              >
+                <Text>Promise</Text>
+              </Button>
+            </View>
+          </View>
 
           <View className="gap-3">
             <View className="flex-row items-center justify-between">

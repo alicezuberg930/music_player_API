@@ -1,6 +1,6 @@
 import { mutationOptions, queryOptions } from '@tanstack/react-query'
 import type {
-    Response,
+    ApiResponse,
     Playlist,
     QueryPlaylist
 } from '@/@types'
@@ -27,7 +27,7 @@ export const playlistQueries = () => ({
                 queryKey: keys.all(opts),
                 queryFn: async () => {
                     const { data } = await httpClient.get<
-                        Response<Playlist[]>
+                        ApiResponse<Playlist[]>
                     >('/playlists', opts)
                     return data
                 },
@@ -39,7 +39,7 @@ export const playlistQueries = () => ({
             queryOptions({
                 queryKey: keys.one(id),
                 queryFn: async () => {
-                    const { data } = await httpClient.get<Response<Playlist>>(
+                    const { data } = await httpClient.get<ApiResponse<Playlist>>(
                         `/playlists/${id}`
                     )
                     return data
@@ -53,7 +53,7 @@ export const playlistQueries = () => ({
             mutationOptions({
                 mutationKey: keys.create(),
                 mutationFn: async (input: PlaylistValidators.CreatePlaylistInput) => {
-                    return await httpClient.post<Response<Playlist>>(
+                    return await httpClient.post<ApiResponse<Playlist>>(
                         '/playlists',
                         input
                     )
@@ -75,7 +75,7 @@ export const playlistQueries = () => ({
                     id,
                     ...input
                 }: PlaylistValidators.UpdatePlaylistInput) => {
-                    return await httpClient.put<Response<Playlist>>(
+                    return await httpClient.put<ApiResponse<Playlist>>(
                         `/playlists/${id}`,
                         input
                     )
@@ -93,7 +93,7 @@ export const playlistQueries = () => ({
             mutationOptions({
                 mutationKey: keys.addToPlaylist(),
                 mutationFn: async ({ id, songIds }: { id: string, songIds: string[] }) => {
-                    return await httpClient.put<Response>(
+                    return await httpClient.put<ApiResponse>(
                         `/playlists/add-songs/${id}`, { songIds }
                     )
                 },
@@ -109,7 +109,7 @@ export const playlistQueries = () => ({
             mutationOptions({
                 mutationKey: keys.removeFromPlaylist(),
                 mutationFn: async ({ id, songIds }: { id: string, songIds: string[] }) => {
-                    return await httpClient.put<Response>(
+                    return await httpClient.put<ApiResponse>(
                         `/playlists/remove-songs/${id}`, { songIds }
                     )
                 },

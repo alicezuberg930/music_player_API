@@ -1,6 +1,6 @@
 import { infiniteQueryOptions, mutationOptions, queryOptions } from '@tanstack/react-query'
 import type {
-  Response,
+  ApiResponse,
   QueryVideo,
   Video
 } from '@/@types'
@@ -24,7 +24,7 @@ export const videoQueries = () => ({
         queryKey: keys.all(opts),
         queryFn: async ({ pageParam }) => {
           const response = await httpClient.get<
-            Response<Video[]>
+            ApiResponse<Video[]>
           >('/videos', { search: opts?.search ?? '', page: pageParam + 1, limit: 15 })
           return response
         },
@@ -40,7 +40,7 @@ export const videoQueries = () => ({
       queryOptions({
         queryKey: keys.stream(id),
         queryFn: async () => {
-          const { data } = await httpClient.get<Response<Video>>(
+          const { data } = await httpClient.get<ApiResponse<Video>>(
             `/videos/stream/${id}`
           )
           return data
@@ -54,7 +54,7 @@ export const videoQueries = () => ({
       queryOptions({
         queryKey: keys.one(id),
         queryFn: async () => {
-          const { data } = await httpClient.get<Response<Video>>(
+          const { data } = await httpClient.get<ApiResponse<Video>>(
             `/videos/${id}`
           )
           return data
@@ -68,7 +68,7 @@ export const videoQueries = () => ({
       mutationOptions({
         mutationKey: keys.create(),
         mutationFn: async (input: FormData) => {
-          return await httpClient.post<Response<Video>>('/videos', input)
+          return await httpClient.post<ApiResponse<Video>>('/videos', input)
         },
         onSuccess: () => {
           // invalidates all videos

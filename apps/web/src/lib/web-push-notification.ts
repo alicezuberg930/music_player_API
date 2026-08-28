@@ -1,4 +1,4 @@
-import type { Response } from "@/@types"
+import type { ApiResponse } from "@/@types"
 import { notificationOptions, pushNotificationKey, vapidKey } from "./constants"
 import { httpClient } from "./repository/http-client"
 
@@ -116,7 +116,7 @@ const registerPushNotification = async () => {
     if (!registration?.pushManager) return false
     const subscription = await getOrCreatePushSubscription(registration)
     try {
-        const response = await httpClient.post<Response<string>>("/notifications/push-notification/subscribe", subscription)
+        const response = await httpClient.post<ApiResponse<string>>("/notifications/push-notification/subscribe", subscription)
         if (!response?.data) return false
         localStorage.setItem(pushNotificationKey, response.data)
         notifyActiveServiceWorker()

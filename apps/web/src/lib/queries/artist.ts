@@ -1,6 +1,6 @@
 import { mutationOptions, queryOptions } from '@tanstack/react-query'
 import type {
-  Response,
+  ApiResponse,
   Artist,
   QueryArtist
 } from '@/@types'
@@ -23,7 +23,7 @@ export const artistQueries = () => ({
         queryKey: keys.all(opts),
         queryFn: async () => {
           const { data } = await httpClient.get<
-            Response<Artist[]>
+            ApiResponse<Artist[]>
           >('/artists', opts)
           return data
         },
@@ -35,7 +35,7 @@ export const artistQueries = () => ({
       queryOptions({
         queryKey: keys.one(id),
         queryFn: async () => {
-          const { data } = await httpClient.get<Response<Artist>>(
+          const { data } = await httpClient.get<ApiResponse<Artist>>(
             `/artists/${id}`
           )
           return data
@@ -49,7 +49,7 @@ export const artistQueries = () => ({
       mutationOptions({
         mutationKey: keys.create(),
         mutationFn: async (input: FormData) => {
-          return await httpClient.post<Response<Artist>>(
+          return await httpClient.post<ApiResponse<Artist>>(
             '/artists',
             input
           )

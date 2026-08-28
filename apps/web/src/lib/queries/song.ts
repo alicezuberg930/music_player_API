@@ -1,6 +1,6 @@
 import { infiniteQueryOptions, mutationOptions, queryOptions } from '@tanstack/react-query'
 import type {
-  Response,
+  ApiResponse,
   QuerySong,
   Song
 } from '@/@types'
@@ -24,7 +24,7 @@ export const songQueries = () => ({
         queryKey: keys.all(opts),
         queryFn: async ({ pageParam }) => {
           return await httpClient.get<
-            Response<Song[]>
+            ApiResponse<Song[]>
           >('/songs', { search: opts?.search ?? '', page: pageParam + 1, limit: opts.limit ?? 15 })
         },
         initialPageParam: 0,
@@ -39,7 +39,7 @@ export const songQueries = () => ({
       queryOptions({
         queryKey: keys.one(id),
         queryFn: async () => {
-          const { data } = await httpClient.get<Response<Song>>(
+          const { data } = await httpClient.get<ApiResponse<Song>>(
             `/songs/${id}`
           )
           return data
@@ -53,7 +53,7 @@ export const songQueries = () => ({
       mutationOptions({
         mutationKey: keys.create(),
         mutationFn: async (input: FormData) => {
-          return await httpClient.post<Response<Song>>(
+          return await httpClient.post<ApiResponse<Song>>(
             '/songs',
             input
           )
@@ -72,7 +72,7 @@ export const songQueries = () => ({
       mutationOptions({
         mutationKey: keys.addListens(),
         mutationFn: async (id: string) => {
-          return await httpClient.put<Response>(`/songs/listens/add/${id}`)
+          return await httpClient.put<ApiResponse>(`/songs/listens/add/${id}`)
         },
       }),
   }

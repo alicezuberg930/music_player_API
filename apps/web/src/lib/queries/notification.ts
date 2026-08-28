@@ -1,6 +1,6 @@
 import { infiniteQueryOptions, mutationOptions, queryOptions } from '@tanstack/react-query'
 import type {
-    Response,
+    ApiResponse,
     Notification,
     QueryNotification
 } from '@/@types'
@@ -21,7 +21,7 @@ export const notificationQueries = () => ({
             infiniteQueryOptions({
                 queryKey: keys.all(opts),
                 queryFn: async ({ pageParam }) => {
-                    const response = await httpClient.get<Response<Notification[]>>('/notifications', { page: pageParam + 1, limit: opts.limit ?? 15 })
+                    const response = await httpClient.get<ApiResponse<Notification[]>>('/notifications', { page: pageParam + 1, limit: opts.limit ?? 15 })
                     return response
                 },
                 initialPageParam: 0,
@@ -36,7 +36,7 @@ export const notificationQueries = () => ({
             queryOptions({
                 queryKey: keys.unread(),
                 queryFn: async () => {
-                    const { data } = await httpClient.get<Response<number>>('/notifications/unread')
+                    const { data } = await httpClient.get<ApiResponse<number>>('/notifications/unread')
                     return data
                 },
             }),
@@ -47,7 +47,7 @@ export const notificationQueries = () => ({
             mutationOptions({
                 mutationKey: keys.markAsRead(),
                 mutationFn: async (input: { ids: string[] }) => {
-                    return await httpClient.put<Response<Response>>(
+                    return await httpClient.put<ApiResponse<ApiResponse>>(
                         '/notifications/read',
                         { ...input }
                     )

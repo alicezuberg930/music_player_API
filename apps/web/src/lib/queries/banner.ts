@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import type {
-    Response,
+    ApiResponse,
     Banner
 } from '@/@types'
 import { httpClient } from '../repository/http-client'
@@ -19,7 +19,7 @@ export const banner = () => ({
                 queryKey: keys.all(),
                 queryFn: async () => {
                     const { data } = await httpClient.get<
-                        Response<Banner[]>
+                        ApiResponse<Banner[]>
                     >('/banners')
                     return data
                 },
@@ -31,7 +31,7 @@ export const banner = () => ({
     //         mutationOptions({
     //             mutationKey: keys.create(),
     //             mutationFn: async (input: PlaylistValidators.AddSongsInput) => {
-    //                 return await httpClient.post<Response<Playlist>>(
+    //                 return await httpClient.post<ApiResponse<Playlist>>(
     //                     '/playlists',
     //                     input
     //                 )

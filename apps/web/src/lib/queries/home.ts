@@ -1,6 +1,6 @@
 import { queryOptions } from '@tanstack/react-query'
 import type {
-    Response,
+    ApiResponse,
     HomeData,
     WeekChartItem
 } from '@/@types'
@@ -18,7 +18,7 @@ export const homeQueries = () => ({
                 queryKey: keys.all(),
                 queryFn: async () => {
                     const { data } = await httpClient.get<
-                        Response<HomeData>
+                        ApiResponse<HomeData>
                     >('/home/get')
                     return data
                 },
@@ -30,7 +30,7 @@ export const homeQueries = () => ({
             queryOptions({
                 queryKey: keys.rankings(),
                 queryFn: async () => {
-                    const response = await httpClient.get<Response<WeekChartItem[]>>('/home/rankings')
+                    const response = await httpClient.get<ApiResponse<WeekChartItem[]>>('/home/rankings')
                     return response.data ?? []
                 },
             }),

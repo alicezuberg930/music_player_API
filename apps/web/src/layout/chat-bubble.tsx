@@ -1,4 +1,4 @@
-import type { Response } from "@/@types";
+import type { ApiResponse } from "@/@types";
 import { httpClient } from "@/lib/repository/http-client";
 import { useAuthContext } from "@/providers/auth-provider";
 import {
@@ -284,7 +284,7 @@ export const ChatBubble = () => {
 
     try {
       const input: SendChatInput = { toUserId: recipientId, content };
-      const response = await httpClient.post<Response<{ id: string }>>(
+      const response = await httpClient.post<ApiResponse<{ id: string }>>(
         "/social/chats",
         input,
       );
